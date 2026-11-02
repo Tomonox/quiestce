@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RoomState, Brainrot } from '../types/game';
 import { CharacterCard } from './CharacterCard';
 import { QuestionModal } from './QuestionModal';
 import { AnswerPrompt } from './AnswerPrompt';
 import { GuessModal } from './GuessModal';
 import { HistoryDrawer } from './HistoryDrawer';
-import { HelpCircle, AlertTriangle, History, Search, RotateCcw, Eye, X } from 'lucide-react';
+import { HelpCircle, AlertTriangle, History, Search, RotateCcw, Eye, EyeOff, Smartphone, Monitor, X } from 'lucide-react';
 
 interface GameBoardProps {
   room: RoomState;
@@ -28,6 +28,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [showGuessModal, setShowGuessModal] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [showMySecretModal, setShowMySecretModal] = useState<boolean>(false);
+
+  // Stream Layout & Streamer Secret Privacy
+  const [streamLayout, setStreamLayout] = useState<'landscape' | 'tiktok-vertical'>('landscape');
+  const [hideSecret, setHideSecret] = useState<boolean>(false);
+
+  // Auto-detect orientation for TikTok vertical capture vs landscape
+  useEffect(() => {
+    const checkOrientation = () => {
+      if (window.innerWidth < 800 || window.innerHeight > window.innerWidth) {
+        setStreamLayout('tiktok-vertical');
+      } else {
+        setStreamLayout('landscape');
+      }
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    return () => window.removeEventListener('resize', checkOrientation);
+  }, []);
 
   // Filters
   const [search, setSearch] = useState<string>('');
@@ -69,106 +87,169 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6 animate-in fade-in duration-200">
-      {/* Game Action Bar & Turn Status */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Turn indicator */}
-        <div className="flex items-center gap-3">
+    <div className="flex-1 min-h-0 flex flex-col p-2 sm:p-3 w-full max-w-[1920px] mx-auto overflow-hidden gap-2 animate-in fade-in duration-200">
+      {/* Game Action HUD & Stream Bar */}
+      <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-2 sm:p-2.5 shadow-xl flex items-center justify-between gap-2.5 shrink-0">
+        {/* Left: Docked Player Secret Mystery Card */}
+        <div className="flex items-center gap-2.5 bg-slate-950/80 border border-amber-400/60 rounded-xl px-2.5 py-1.5 shadow-inner">
+          {/* Secret miniature flap */}
+          <div className="yellow-plastic-frame rounded-lg p-1 shrink-0 w-10 h-11 flex items-center justify-center relative shadow">
+            {hideSecret ? (
+              <div className="w-full h-full bg-slate-900 rounded flex items-center justify-center text-xs">
+                🙈
+              </div>
+            ) : room.me?.secret ? (
+              <div className="w-full h-full bg-white rounded border border-amber-300 p-0.5 flex items-center justify-center">
+                <img
+                  src={room.me.secret.localImage || `/images/brainrots/${room.me.secret.id}.png`}
+                  alt={room.me.secret.name}
+                  className="w-full h-full object-contain filter drop-shadow-xs"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/brainrots/placeholder.svg';
+                  }}
+                />
+              </div>
+            ) : (
+              <span className="text-xs">❓</span>
+            )}
+          </div>
+
+          {/* Secret character label & stream hide toggle */}
+          <div className="leading-tight">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">
+                TON PERSONNAGE
+              </span>
+              <button
+                onClick={() => setHideSecret(!hideSecret)}
+                className="text-[10px] text-slate-400 hover:text-white transition-colors"
+                title={hideSecret ? "Afficher le secret" : "Masquer pour le stream TikTok"}
+              >
+                {hideSecret ? <Eye className="w-3 h-3 text-amber-400" /> : <EyeOff className="w-3 h-3" />}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs sm:text-sm font-extrabold text-white max-w-[130px] sm:max-w-[180px] truncate block">
+                {hideSecret ? '••••••••••' : (room.me?.secret?.name || 'Inconnu')}
+              </span>
+              <button
+                onClick={() => setShowMySecretModal(true)}
+                className="text-[10px] text-amber-300 hover:text-white underline font-medium"
+              >
+                Détails
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Turn indicator & Counters */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <div
-            className={`px-4 py-2 rounded-xl text-sm sm:text-base font-extrabold flex items-center gap-2 border shadow-sm ${
+            className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 border shadow-sm ${
               isMyTurn
-                ? 'bg-amber-400 text-slate-950 border-amber-300'
+                ? 'bg-amber-400 text-slate-950 border-amber-300 animate-pulse'
                 : 'bg-slate-800 text-slate-300 border-slate-700'
             }`}
           >
             <span>{isMyTurn ? '🎯 À TON TOUR !' : `⏳ TOUR DE ${room.opponent?.nickname || 'L\'ADVERSAIRE'}`}</span>
           </div>
 
-          <span className="text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded-full">
-            Tour #{room.turnNumber}
-          </span>
+          <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-300">
+            <span className="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">
+              Tour #{room.turnNumber}
+            </span>
+            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg">
+              {remainingCount} / {totalCards} actifs
+            </span>
+          </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2.5 w-full md:w-auto">
+        {/* Right: Actions & TikTok Stream Layout Switcher */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowQuestionModal(true)}
             disabled={!isMyTurn || isAnswering}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl btn-tactile-blue text-white text-xs sm:text-sm font-bold border border-blue-400/40 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl btn-tactile-blue text-white text-xs sm:text-sm font-bold border border-blue-400/40 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
-            <HelpCircle className="w-4 h-4 stroke-[2.5]" />
-            <span>POSER UNE QUESTION</span>
+            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">QUESTION</span>
           </button>
 
           <button
             onClick={() => setShowGuessModal(true)}
             disabled={!isMyTurn || isAnswering}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl btn-tactile-red text-white text-xs sm:text-sm font-bold border border-red-400/40 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl btn-tactile-red text-white text-xs sm:text-sm font-bold border border-red-400/40 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
-            <AlertTriangle className="w-4 h-4 stroke-[2.5]" />
-            <span>DEVINER !</span>
+            <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">DEVINER !</span>
           </button>
 
           <button
             onClick={() => setShowHistory(true)}
             title="Historique des questions"
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
           >
             <History className="w-4 h-4" />
+          </button>
+
+          {/* TikTok Live Studio Layout Switcher (16:9 Landscape vs 9:16 Vertical) */}
+          <button
+            onClick={() => setStreamLayout(streamLayout === 'landscape' ? 'tiktok-vertical' : 'landscape')}
+            title="Changer la disposition (16:9 Plein Écran ou 9:16 TikTok Vertical)"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 text-xs font-bold transition-all"
+          >
+            {streamLayout === 'landscape' ? (
+              <>
+                <Monitor className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline text-[11px]">16:9 Paysage</span>
+              </>
+            ) : (
+              <>
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline text-[11px]">9:16 TikTok</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* The Physical Toy Game Tray Container */}
-      <div className={`${trayClass} rounded-3xl p-4 sm:p-7 shadow-2xl relative space-y-5`}>
-        {/* Tray Header Bar (Authentic Board Label + Counters) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/20 pb-3 text-white">
+      {/* The Physical Toy Game Tray Container (Zero-Scroll 100% Fit) */}
+      <div className={`flex-1 min-h-0 flex flex-col ${trayClass} rounded-2xl p-2 sm:p-2.5 shadow-2xl relative overflow-hidden transition-all duration-300 ${
+        streamLayout === 'tiktok-vertical' ? 'max-w-2xl mx-auto w-full' : 'w-full'
+      }`}>
+        {/* Tray Header Bar (Authentic Board Label + Filters + Pegs) */}
+        <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-white/20 pb-1.5 text-white shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
-              PLATEAU DE {room.me?.nickname} • {isBlueTray ? 'ÉQUIPE BLEUE' : 'ÉQUIPE ROUGE'}
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-white">
+              {room.me?.nickname} • {isBlueTray ? 'BLEU' : 'ROUGE'}
+            </span>
+            <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded text-amber-300 font-semibold">
+              {remainingCount} restants
             </span>
           </div>
 
-          {/* Peg score markers & cards count */}
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-full border border-white/20">
-              <span className="text-amber-300 font-medium">Cartes actives :</span>
-              <span className="font-bold text-white bg-amber-500/80 px-2 py-0.5 rounded">
-                {remainingCount} / {totalCards}
-              </span>
+          {/* Quick Trait Filters & Search */}
+          <div className="flex items-center gap-1 text-[11px] overflow-x-auto scrollbar-none">
+            <div className="relative w-28 sm:w-36">
+              <Search className="w-3 h-3 text-slate-300 absolute left-2 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Filtrer..."
+                className="w-full pl-6 pr-2 py-0.5 rounded-lg bg-black/40 text-white placeholder-slate-400 text-[10px] font-medium border border-white/20 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              />
             </div>
 
-            <div className="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-full border border-white/20">
-              <span className="text-slate-300 font-medium">{room.opponent?.nickname || 'Adversaire'} :</span>
-              <span className="font-bold text-white">
-                {room.opponent?.eliminatedCount || 0} éliminés
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Search & Trait Filters Bar */}
-        <div className="bg-black/25 rounded-2xl p-2.5 flex flex-col sm:flex-row gap-2.5 items-center justify-between border border-white/10">
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Chercher un Brainrot..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/95 text-slate-900 placeholder-slate-500 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-400"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs w-full sm:w-auto">
             {traitFilters.map(t => (
               <button
                 key={t.id}
                 onClick={() => setActiveTraitFilter(activeTraitFilter === t.id ? null : t.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border transition-all ${
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap border transition-all ${
                   activeTraitFilter === t.id
                     ? 'bg-amber-400 text-slate-950 border-white shadow'
-                    : 'bg-white/15 text-white border-white/20 hover:bg-white/25'
+                    : 'bg-black/30 text-white border-white/20 hover:bg-black/50'
                 }`}
               >
                 {t.label}
@@ -178,17 +259,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             {myEliminated.length > 0 && (
               <button
                 onClick={onResetEliminations}
-                className="ml-auto text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-white px-3 py-1 rounded-lg border border-white flex items-center gap-1 shadow-sm transition-colors"
+                className="text-[10px] font-semibold bg-amber-500 hover:bg-amber-400 text-white px-2 py-0.5 rounded-lg border border-white flex items-center gap-1 shadow-sm transition-colors"
+                title="Rétablir toutes les cartes éliminées"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span>Rétablir tout</span>
+                <RotateCcw className="w-2.5 h-2.5" />
+                <span className="hidden sm:inline">Rétablir</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* The 24 Characters Grid (Clean 4 rows x 6 columns) */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3.5 pt-1">
+        {/* The 24 Characters Grid: 100% Height, ZERO Scrolling */}
+        <div className={`flex-1 min-h-0 grid gap-1 sm:gap-1.5 h-full w-full pt-1.5 ${
+          streamLayout === 'landscape'
+            ? 'grid-cols-6 grid-rows-4'
+            : 'grid-cols-4 grid-rows-6'
+        }`}>
           {filteredBoard.map((card) => {
             const isEliminated = myEliminated.includes(card.id);
             return (
@@ -197,57 +283,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 card={card}
                 isEliminated={isEliminated}
                 onToggleEliminate={onToggleEliminate}
+                compact={true}
               />
             );
           })}
-        </div>
-
-        {/* The Authentic Front Slot: Player's Secret Mystery Card Stand */}
-        <div className="pt-4 border-t border-white/20 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <div className="bg-black/40 rounded-2xl p-3 border border-amber-400/70 shadow-xl flex items-center gap-4 max-w-md w-full">
-            {/* The Front Yellow Frame for the Secret Card */}
-            <div className="yellow-plastic-frame rounded-xl p-1.5 shrink-0 shadow-lg w-20 sm:w-24">
-              <div className="w-full aspect-[4/4.5] bg-white rounded border border-amber-300 p-1 flex items-center justify-center">
-                {room.me?.secret ? (
-                  <img
-                    src={room.me.secret.localImage || `/images/brainrots/${room.me.secret.id}.png`}
-                    alt={room.me.secret.name}
-                    className="w-full h-full object-contain filter drop-shadow"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/brainrots/placeholder.svg';
-                    }}
-                  />
-                ) : (
-                  <span className="text-2xl">❓</span>
-                )}
-              </div>
-              <div className="mt-1 py-0.5 bg-white rounded text-center">
-                <span className="text-[10px] font-black text-slate-900 uppercase truncate block px-1">
-                  {room.me?.secret?.name || 'Secret'}
-                </span>
-              </div>
-            </div>
-
-            {/* Secret Card Information */}
-            <div className="flex-1 min-w-0 text-white space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-black/40 px-2 py-0.5 rounded border border-amber-400/40 inline-block">
-                TON PERSONNAGE MYSTÈRE
-              </span>
-              <h3 className="text-base sm:text-lg font-extrabold text-white truncate">
-                {room.me?.secret?.name}
-              </h3>
-              <p className="text-xs text-slate-200">
-                Rareté : <b className="text-amber-300">{room.me?.secret?.rarity}</b> • Couleur : <b className="text-amber-300">{room.me?.secret?.traits?.color}</b>
-              </p>
-              <button
-                onClick={() => setShowMySecretModal(true)}
-                className="text-xs font-semibold text-amber-300 hover:text-white underline flex items-center gap-1 pt-0.5"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Voir toutes ses caractéristiques</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 

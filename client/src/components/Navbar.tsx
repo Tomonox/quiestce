@@ -5,6 +5,7 @@ import { audio } from '../utils/audio';
 interface NavbarProps {
   onlineCount: number;
   inGameOrLobby: boolean;
+  compact?: boolean;
   roomCode?: string;
   onOpenRules: () => void;
   onOpenEncyclopedia: () => void;
@@ -18,6 +19,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   onlineCount,
   inGameOrLobby,
+  compact = false,
   roomCode,
   onOpenRules,
   onOpenEncyclopedia,
@@ -38,24 +40,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0d131f]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-2.5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+    <header className={`sticky top-0 z-40 bg-[#0d131f]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-5 ${
+      compact ? 'py-1 sm:py-1.5' : 'py-2.5'
+    }`}>
+      <div className="max-w-[1920px] mx-auto flex items-center justify-between gap-3">
         {/* Brand: MB Seal + Authentic QUI ? EST-CE */}
-        <div className="flex items-center gap-3">
-          <div className="mb-badge px-2 py-0.5 rounded-md text-center shadow">
-            <span className="text-xs leading-none block font-black tracking-wide">MB</span>
-            <span className="text-[7px] leading-none block font-extrabold tracking-tighter">JEUX</span>
+        <div className="flex items-center gap-2.5">
+          <div className="mb-badge px-1.5 py-0.5 rounded text-center shadow shrink-0">
+            <span className="text-[11px] leading-none block font-black tracking-wide">MB</span>
+            <span className="text-[6.5px] leading-none block font-extrabold tracking-tighter">JEUX</span>
           </div>
 
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="quiestce-brand-title text-xl sm:text-2xl leading-none">
+              <span className={`quiestce-brand-title leading-none ${compact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'}`}>
                 QUI <span className="quiestce-mark">?</span> EST-CE
               </span>
             </div>
-            <span className="text-[10px] font-semibold text-slate-400 tracking-wide uppercase hidden sm:block">
-              Édition Steal a Brainrot Roblox
-            </span>
+            {!compact && (
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wide uppercase hidden sm:block">
+                Édition Steal a Brainrot Roblox
+              </span>
+            )}
           </div>
         </div>
 

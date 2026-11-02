@@ -247,7 +247,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div className={currentView === 'game' ? 'h-screen max-h-screen overflow-hidden flex flex-col bg-[#0b0f19]' : 'min-h-screen flex flex-col justify-between'}>
       {/* Toast Notification Banner */}
       {errorMessage && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white text-xs sm:text-sm font-semibold px-5 py-2 rounded-xl shadow-xl border border-red-400 animate-in fade-in slide-in-from-top duration-200">
@@ -259,6 +259,7 @@ export const App: React.FC = () => {
       <Navbar
         onlineCount={onlineCount}
         inGameOrLobby={currentView !== 'home'}
+        compact={currentView === 'game'}
         roomCode={room?.code}
         onOpenRules={() => setShowRules(true)}
         onOpenEncyclopedia={() => setShowEncyclopedia(true)}
@@ -270,7 +271,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main View */}
-      <main className="flex-1 pb-10">
+      <main className={currentView === 'game' ? 'flex-1 min-h-0 overflow-hidden flex flex-col' : 'flex-1 pb-10'}>
         {currentView === 'home' && (
           <Home
             nickname={nickname}
@@ -305,17 +306,19 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-4 text-xs text-slate-400 bg-[#0d131f]/90">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>
-            BRAINROT QUI EST-CE ? • Inspiré du jeu MB Jeux / Hasbro & Steal a Brainrot Roblox
-          </span>
-          <span className="text-[11px] text-slate-400">
-            24 Brainrots dynamiques par partie • Déployable sur Render.com
-          </span>
-        </div>
-      </footer>
+      {/* Footer (Hidden during game so all 24 cards fit with 0 vertical scroll on stream) */}
+      {currentView !== 'game' && (
+        <footer className="border-t border-slate-800/80 py-4 text-xs text-slate-400 bg-[#0d131f]/90">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>
+              BRAINROT QUI EST-CE ? • Inspiré du jeu MB Jeux / Hasbro & Steal a Brainrot Roblox
+            </span>
+            <span className="text-[11px] text-slate-400">
+              24 Brainrots dynamiques par partie • Déployable sur Render.com
+            </span>
+          </div>
+        </footer>
+      )}
 
       {/* Game Over Modal */}
       <GameOverModal
