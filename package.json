@@ -9,7 +9,7 @@
     "server": "node server/index.js",
     "client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm --prefix client install && npm --prefix client run build",
+    "build": "npm install && npm --prefix client install && npm --prefix client run build",
     "postinstall": "npm --prefix client install",
     "fetch-brainrots": "node server/scripts/fetchBrainrots.js",
     "install-all": "npm install && npm --prefix client install"
