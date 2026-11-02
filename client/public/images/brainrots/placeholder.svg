@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#db2777" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#grad)" />
+  <circle cx="100" cy="85" r="45" fill="#1e1b4b" opacity="0.6" />
+  <text x="100" y="100" font-size="50" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">🧠</text>
+  <text x="100" y="155" font-family="sans-serif" font-weight="bold" font-size="14" text-anchor="middle" fill="#e0e7ff">BRAINROT</text>
+</svg>
